@@ -1,0 +1,167 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+{% block content %}
+
+<style>
+
+
+table.dataTable tbody tr.odd.selected {
+ background-color:#acbad4
+}
+
+table.dataTable tbody tr.even.selected {
+ background-color:#acbad5
+}
+
+
+</style>
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h2 class="text-gray-800">{% block title %}{% trans "Imported Entries" %}{% endblock %}</h2>
+    <a role="button" class="btn btn-success" href="{% url 'import' %}"><i
+            class="fas fa-plus-circle"></i> Import New Entires</a>
+</div>
+
+<button id="countbutton">Count rows</button>
+<button id="countbuttonids">Count row ids</button>
+<button id="deletebutton">Delete rows</button>
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-md-12">
+        <table id="entrytable"
+               class="table-hover table display table-bordered"
+               align="center"
+               style="width:100%">
+            <thead>
+            <tr role="row">
+                <th>id</th>
+                <th>date</th>
+                <th>amount</th>
+                <th>price</th>
+                <th>fee</th>
+                <th>entry_type</th>
+                <th>reg_fee</th>
+                <th>transaction_id</th>
+                <th>trade</th>
+                <th>symbol</th>
+            </tr>
+            </thead>
+
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block js %}
+
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css"/>
+
+
+<!--https://datatables.net/examples/server_side/select_rows.html-->
+<!--<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css"/>-->
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
+
+
+<script>
+
+$(document).ready(function() {
+
+//    var selected = [];
+
+    var table = $('#entrytable').DataTable({
+        "order": [[ 0, "desc" ]],
+        "processing": true,
+        "ajax": "/api/entries/?format=datatables",
+        "columns": [
+            {
+                "data": "id",
+                "render": function ( data, type, row, meta ) {
+                    return '<a type="button" class="" target="_blank" href="' + data + '">' + data + ' </a>';
+                }
+            },
+            {"data": "date"},
+            {"data": "amount"},
+            {"data": "price"},
+            {"data": "fee"},
+            {"data": "entry_type"},
+            {"data": "reg_fee"},
+            {"data": "transaction_id"},
+            {
+                "data": "trade",
+                "render": function ( data, type, row, meta ) {
+                    if (data) {
+                      return '<a type="button" target="_blank" class="" href="/trade/' + data + '"> ' + data + ' </a>';
+                    } else {
+                      // show nothing
+                    }
+                },
+                "defaultContent": "",
+            },
+            {
+                "data": "symbol",
+                "defaultContent": "",
+            },
+           // {"data": "created_by"},
+            ],
+
+
+    });
+
+    $('#entrytable tbody').on( 'click', 'tr', function () {
+        $(this).toggleClass('selected');
+    } );
+
+    $('#countbutton').click( function () {
+        alert( table.rows('.selected').data().length +' row(s) selected' );
+    } );
+
+    $('#countbuttonids').click( function () {
+       alert( table.rows('.selected').data().pluck('id').toArray() );
+    } );
+
+    $('#deletebutton').click( function () {
+        var selectedRows = table.rows({"selected": true});
+
+        // Get ids of selected rows to pass to url
+        var dataObj = table.rows('.selected').data().pluck('id').toArray();
+
+        $.ajax({
+            // DRF endpoint specific delete object
+            // TEST:success
+            "url": '/api/entries/795/',
+            // # TODO:
+            // Send to custom endpoint to delete list of endpoints
+            // TEST:error entry_ids = self.kwargs['id']
+            "url": '/api/delete-entries',
+            "type": 'DELETE',
+            "beforeSend": function(xhr) {
+                xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token|escapejs }}");
+            },
+            "contentType": 'application/json',
+            "data": dataObj,
+            "success": function (data, status, xhr) {
+                // remove the selected rows from the view
+                table.row('.selected').remove().draw( false );
+            }
+        })
+    } );
+
+
+} );
+
+
+
+</script>
+
+{% endblock %}
+
+
+

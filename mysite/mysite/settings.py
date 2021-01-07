@@ -8,7 +8,13 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
+
+SuperUser Username= admin
+SuperUser Pass= admin123
+
 """
+
+
 
 from pathlib import Path
 
@@ -37,6 +43,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    #custom apps
+    'webapp'
 ]
 
 MIDDLEWARE = [
